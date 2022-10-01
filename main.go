@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/seagalputra/cashbot/command_history"
+	"github.com/seagalputra/cashbot/expense"
 	"gopkg.in/telebot.v3"
 	"gopkg.in/telebot.v3/middleware"
 	_ "modernc.org/sqlite"
@@ -19,6 +21,8 @@ var (
 	selector = &telebot.ReplyMarkup{}
 	btnYes   = selector.Data("Yes", "yes")
 	btnNo    = selector.Data("No", "no")
+
+	userState = map[string]interface{}{}
 
 	// TODO: save to OS env
 	API_TOKEN string = "1706311893:AAHogb1MjYlTL1bK6un-tY5pMhhnYx0_K7I"
@@ -46,6 +50,7 @@ func main() {
 	defer db.Close()
 
 	commandHistoryRepo := &command_history.CommandHistoryRepo{DB: db}
+	expenseRepo := &expense.ExpenseRepo{DB: db}
 
 	pref := telebot.Settings{
 		Token: API_TOKEN,
@@ -71,17 +76,33 @@ func main() {
 		}
 
 		step := history.Step
+		userKey := username + "_" + history.CommandName
+		log.Println(userState)
+		log.Println(userKey)
 		var msg string
-
 		switch step {
 		case 1:
 			msg = "How many amount do you want to record?"
+			exp := userState[userKey].(*expense.Expense)
+			exp.Title = c.Text()
+			userState[userKey] = exp
 			commandHistoryRepo.IncrementStepByUsername(username)
 		case 2:
 			msg = "When you do the expense?"
+			exp := userState[userKey].(*expense.Expense)
+			amount, err := strconv.Atoi(c.Text())
+			if err != nil {
+				log.Println(err)
+			}
+			exp.Amount = amount
+			userState[userKey] = exp
 			commandHistoryRepo.IncrementStepByUsername(username)
 		case 3:
 			msg = "Here's your expense. Please re-check if it wrongs"
+			exp := userState[userKey].(*expense.Expense)
+			// TODO: change based on user input
+			exp.ExpenseDate = time.Now()
+			userState[userKey] = exp
 			commandHistoryRepo.IncrementStepByUsername(username)
 
 			selector.Inline(
@@ -104,13 +125,19 @@ func main() {
 
 	b.Handle("/addexpense", func(c telebot.Context) error {
 		msg := "Please provide the title of the expense"
+		username := c.Message().Chat.Username
 
 		history := command_history.CommandHistory{}
-		history.Username = c.Message().Chat.Username
+		history.Username = username
 		history.CommandName = "addexpense"
 		history.Step = 1
 
 		commandHistoryRepo.InsertHistory(history)
+
+		userKey := username + "_" + "addexpense"
+		userState[userKey] = &expense.Expense{
+			Username: username,
+		}
 
 		return c.Send(msg)
 	})
@@ -125,9 +152,19 @@ func main() {
 
 	b.Handle(&btnYes, func(c telebot.Context) error {
 		username := c.Message().Chat.Username
-		commandHistoryRepo.DeleteByUsername(username)
+		history, err := commandHistoryRepo.FindByUsername(username)
+		if err != nil {
+			log.Println(err)
+		}
 
-		// TODO: add expense to database
+		userKey := username + "_" + history.CommandName
+		exp := userState[userKey].(*expense.Expense)
+		err = expenseRepo.Insert(*exp)
+		if err != nil {
+			log.Println(err)
+		}
+
+		commandHistoryRepo.DeleteByUsername(username)
 		return c.Send("Your expense was successfully added!")
 	})
 

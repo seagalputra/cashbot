@@ -5,22 +5,25 @@ import (
 	"fmt"
 )
 
-type CommandHistory struct {
-	ID          int
-	CommandName string
-	Username    string
-	Step        int
-}
+type (
+	CommandHistory struct {
+		ID          int
+		CommandName string
+		Username    string
+		Step        int
+	}
 
-type CommandHistoryRepo struct {
-	DB *sql.DB
-}
+	CommandHistoryRepo struct {
+		DB *sql.DB
+	}
+)
 
 func (ch *CommandHistoryRepo) InsertHistory(history CommandHistory) error {
 	_, err := ch.DB.Exec(
-		"INSERT INTO command_histories (username, step) VALUES (?, ?)",
+		"INSERT INTO command_histories (username, step, command_name) VALUES (?, ?, ?)",
 		history.Username,
 		history.Step,
+		history.CommandName,
 	)
 
 	if err != nil {
@@ -42,9 +45,9 @@ func (ch *CommandHistoryRepo) IncrementStepByUsername(username string) error {
 
 func (ch *CommandHistoryRepo) FindByUsername(username string) (*CommandHistory, error) {
 	var history CommandHistory
-	row := ch.DB.QueryRow("SELECT id, username, step FROM command_histories WHERE username = ?", username)
+	row := ch.DB.QueryRow("SELECT id, username, step, command_name FROM command_histories WHERE username = ?", username)
 
-	if err := row.Scan(&history.ID, &history.Username, &history.Step); err != nil {
+	if err := row.Scan(&history.ID, &history.Username, &history.Step, &history.CommandName); err != nil {
 		return nil, fmt.Errorf("[FindByUsername] %v", err)
 	}
 
