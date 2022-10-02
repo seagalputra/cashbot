@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/seagalputra/cashbot/command_history"
 	"github.com/seagalputra/cashbot/expense"
 	"gopkg.in/telebot.v3"
@@ -24,8 +26,7 @@ var (
 
 	userState = map[string]interface{}{}
 
-	// TODO: save to OS env
-	API_TOKEN string = "1706311893:AAHogb1MjYlTL1bK6un-tY5pMhhnYx0_K7I"
+	telegramApiToken string
 
 	helpMsg = `
 I can help you to record your money expenses.
@@ -49,11 +50,18 @@ func main() {
 	}
 	defer db.Close()
 
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	telegramApiToken = os.Getenv("TELEGRAM_BOT_API_KEY")
+
 	commandHistoryRepo := &command_history.CommandHistoryRepo{DB: db}
 	expenseRepo := &expense.ExpenseRepo{DB: db}
 
 	pref := telebot.Settings{
-		Token: API_TOKEN,
+		Token: telegramApiToken,
 		Poller: &telebot.LongPoller{
 			Timeout: 10 * time.Second,
 		},
