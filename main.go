@@ -85,8 +85,6 @@ func main() {
 
 		step := history.Step
 		userKey := username + "_" + history.CommandName
-		log.Println(userState)
-		log.Println(userKey)
 		var msg string
 		switch step {
 		case 1:
