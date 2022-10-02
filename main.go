@@ -24,6 +24,10 @@ var (
 	btnYes   = selector.Data("Yes", "yes")
 	btnNo    = selector.Data("No", "no")
 
+	expenseTypeSelector = &telebot.ReplyMarkup{}
+	btnIncome           = expenseTypeSelector.Data("Income", "income", "income")
+	btnOutcome          = expenseTypeSelector.Data("Outcome", "outcome", "outcome")
+
 	userState = map[string]interface{}{}
 
 	telegramApiToken string
@@ -130,13 +134,12 @@ func main() {
 	})
 
 	b.Handle("/addexpense", func(c telebot.Context) error {
-		msg := "Please provide the title of the expense"
+		msg := "What type of your expense is?"
 		username := c.Message().Chat.Username
 
 		history := command_history.CommandHistory{}
 		history.Username = username
 		history.CommandName = "addexpense"
-		history.Step = 1
 
 		commandHistoryRepo.InsertHistory(history)
 
@@ -145,7 +148,11 @@ func main() {
 			Username: username,
 		}
 
-		return c.Send(msg)
+		expenseTypeSelector.Inline(
+			expenseTypeSelector.Row(btnIncome, btnOutcome),
+		)
+
+		return c.Send(msg, expenseTypeSelector)
 	})
 
 	b.Handle("/help", func(c telebot.Context) error {
@@ -175,6 +182,29 @@ func main() {
 	})
 
 	b.Handle(&btnNo, func(c telebot.Context) error {
+		return c.Respond()
+	})
+
+	b.Handle(&btnIncome, func(c telebot.Context) error {
+		username := c.Message().Chat.Username
+		history, err := commandHistoryRepo.FindByUsername(username)
+		if err != nil {
+			log.Println(err)
+		}
+
+		userKey := username + "_" + history.CommandName
+		exp := userState[userKey].(*expense.Expense)
+		exp.Type = c.Data()
+		userState[userKey] = exp
+
+		commandHistoryRepo.IncrementStepByUsername(username)
+
+		msg := "Please provide the title of the expense"
+
+		return c.Send(msg)
+	})
+
+	b.Handle(&btnOutcome, func(c telebot.Context) error {
 		return c.Respond()
 	})
 
