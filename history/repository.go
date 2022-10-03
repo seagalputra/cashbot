@@ -1,4 +1,4 @@
-package command_history
+package history
 
 import (
 	"database/sql"

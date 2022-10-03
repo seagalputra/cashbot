@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 
 	"github.com/joho/godotenv"
-	"github.com/seagalputra/cashbot/command_history"
 	"github.com/seagalputra/cashbot/expense"
-	"github.com/seagalputra/cashbot/handler"
+	"github.com/seagalputra/cashbot/history"
+	"github.com/seagalputra/cashbot/tgbot"
 	_ "modernc.org/sqlite"
 )
 
@@ -38,11 +38,11 @@ func main() {
 
 	LoadEnv()
 
-	commandHistoryRepo := &command_history.CommandHistoryRepo{DB: db}
+	commandHistoryRepo := &history.CommandHistoryRepo{DB: db}
 	expenseRepo := &expense.ExpenseRepo{DB: db}
 
-	handler.HelpMsg = helpMsg
-	telegramBot := &handler.TelegramBot{
+	tgbot.HelpMsg = helpMsg
+	telegramBot := &tgbot.TelegramBot{
 		CommandHistoryRepo: *commandHistoryRepo,
 		ExpenseRepo:        *expenseRepo,
 	}

@@ -1,4 +1,4 @@
-package handler
+package tgbot
 
 import (
 	"fmt"
@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/seagalputra/cashbot/command_history"
 	"github.com/seagalputra/cashbot/expense"
+	"github.com/seagalputra/cashbot/history"
 	"gopkg.in/telebot.v3"
 	"gopkg.in/telebot.v3/middleware"
 )
 
 type TelegramBot struct {
-	CommandHistoryRepo command_history.CommandHistoryRepo
+	CommandHistoryRepo history.CommandHistoryRepo
 	ExpenseRepo        expense.ExpenseRepo
 }
 
@@ -92,11 +92,11 @@ func (t *TelegramBot) HandleAddExpense(c telebot.Context) error {
 	msg := "What type of your expense is?"
 	username := c.Message().Chat.Username
 
-	history := command_history.CommandHistory{}
-	history.Username = username
-	history.CommandName = "addexpense"
+	h := history.CommandHistory{}
+	h.Username = username
+	h.CommandName = "addexpense"
 
-	t.CommandHistoryRepo.InsertHistory(history)
+	t.CommandHistoryRepo.InsertHistory(h)
 
 	userKey := username + "_" + "addexpense"
 	userState[userKey] = &expense.Expense{
