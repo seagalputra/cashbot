@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"log"
 	"path/filepath"
 
@@ -14,6 +15,9 @@ import (
 
 var (
 	db *sql.DB
+
+	//go:embed assets/help.txt
+	helpMsg string
 )
 
 func LoadEnv() {
@@ -37,6 +41,7 @@ func main() {
 	commandHistoryRepo := &command_history.CommandHistoryRepo{DB: db}
 	expenseRepo := &expense.ExpenseRepo{DB: db}
 
+	handler.HelpMsg = helpMsg
 	telegramBot := &handler.TelegramBot{
 		CommandHistoryRepo: *commandHistoryRepo,
 		ExpenseRepo:        *expenseRepo,

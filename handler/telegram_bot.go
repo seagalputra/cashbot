@@ -1,7 +1,6 @@
 package handler
 
 import (
-	_ "embed"
 	"fmt"
 	"log"
 	"os"
@@ -32,8 +31,7 @@ var (
 
 	telegramApiToken string
 
-	//go:embed assets/help.txt
-	helpMsg string
+	HelpMsg string
 )
 
 func (t *TelegramBot) HandleCommandStart(c telebot.Context) error {
@@ -113,7 +111,7 @@ func (t *TelegramBot) HandleAddExpense(c telebot.Context) error {
 }
 
 func (t *TelegramBot) HandleHelp(c telebot.Context) error {
-	return c.Send(helpMsg)
+	return c.Send(HelpMsg)
 }
 
 func (t *TelegramBot) HandleCancel(c telebot.Context) error {
