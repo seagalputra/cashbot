@@ -62,6 +62,8 @@ func (t *TelegramBot) HandleText(c telebot.Context) error {
 		exp.Title = c.Text()
 		userState[userKey] = exp
 		t.CommandHistoryRepo.IncrementStepByUsername(username)
+
+		return c.Send(msg)
 	case 2:
 		msg = "When you do the expense?"
 		exp := userState[userKey].(*expense.Expense)
@@ -72,20 +74,31 @@ func (t *TelegramBot) HandleText(c telebot.Context) error {
 		exp.Amount = amount
 		userState[userKey] = exp
 		t.CommandHistoryRepo.IncrementStepByUsername(username)
+
+		return c.Send(msg)
 	case 3:
 		msg = "Here's your expense. Please re-check if it wrongs"
 		exp := userState[userKey].(*expense.Expense)
-		// TODO: change based on user input
-		exp.ExpenseDate = time.Now()
+		expenseDate, err := expense.ParseExpenseDate(c.Text())
+		if err != nil {
+			msg = "Oops, i'm failed to recognized your time format, use day-month-year (DD-MM-YYYY) pattern."
+			log.Println(err)
+
+			return c.Send(msg)
+		}
+
+		exp.ExpenseDate = *expenseDate
 		userState[userKey] = exp
 		t.CommandHistoryRepo.IncrementStepByUsername(username)
 
 		selector.Inline(
 			selector.Row(btnYes, btnNo),
 		)
+
+		return c.Send(msg, selector)
 	}
 
-	return c.Send(msg, selector)
+	return nil
 }
 
 func (t *TelegramBot) HandleAddExpense(c telebot.Context) error {
