@@ -1,7 +1,6 @@
 package tgbot
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -128,7 +127,11 @@ func (t *TelegramBot) HandleHelp(c telebot.Context) error {
 }
 
 func (t *TelegramBot) HandleCancel(c telebot.Context) error {
-	return fmt.Errorf("Not yet implemented!")
+	msg := "The current operation has been cancelled. Please let me know when you have any request to me"
+	username := c.Message().Chat.Username
+	t.CommandHistoryRepo.DeleteByUsername(username)
+
+	return c.Send(msg)
 }
 
 func (t *TelegramBot) HandleBtnYes(c telebot.Context) error {

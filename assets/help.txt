@@ -5,5 +5,6 @@ You can control me by sending the following commands:
 /addexpense - add new expense
 /editexpense - edit an expense
 /viewexpense - view an available expense
-/configure - config your Google Sheets account
+/settings - config your Google Sheets account
+/cancel - cancel current command
 /help - show available commands
